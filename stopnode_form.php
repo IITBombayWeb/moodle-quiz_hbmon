@@ -26,7 +26,7 @@ require_once ($CFG->libdir . '/formslib.php');
  * @copyright  2017 IIT Bombay, India
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class startnode_form extends moodleform {
+class stopnode_form extends moodleform {
 
     /** @var object course module object. */
     protected $cm;
@@ -77,13 +77,13 @@ class startnode_form extends moodleform {
 //         $phpws_result = @socket_connect($socket, '127.0.0.1', 3000);
 
 //         if(!$phpws_result) {
-            $mform->addElement('static', 'description', '', 'Start the \'Time server\' by clicking \'Start\' button.');
-            // Start button.
-            $mform->addElement('submit', 'submitbutton', 'Start');
+//             $mform->addElement('static', 'description', '', 'Start the \'Time server\' by clicking \'Start\' button.');
+//             // Start button.
+//             $mform->addElement('submit', 'submitbutton', 'Start');
 //         } else {
-//             $mform->addElement('static', 'description', '', 'Heartbeat time server is running. <br>Stop the time server by clicking on the \'Stop\' button.');
-//             // Stop button.
-//             $mform->addElement('submit', 'submitbutton', 'Stop');
+            $mform->addElement('static', 'description', '', 'Heartbeat time server is running. <br>Stop the time server by clicking on the \'Stop\' button.');
+            // Stop button.
+            $mform->addElement('submit', 'submitbutton', 'Stop');
 //         }
     }
 }

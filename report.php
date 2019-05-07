@@ -24,6 +24,7 @@
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/quiz/report/attemptsreport.php');
 require_once($CFG->dirroot . '/mod/quiz/report/hbmon/startnode_form.php');
+require_once($CFG->dirroot . '/mod/quiz/report/hbmon/stopnode_form.php');
 
 // require_once($CFG->dirroot . '/mod/quiz/report/hbmon/hbmonconfig.php');
 require_once($CFG->dirroot . '/mod/quiz/accessrule/heartbeatmonitor/hbmonconfig.php');
@@ -189,6 +190,7 @@ class quiz_hbmon_report extends quiz_attempts_report {
 
         $url = new moodle_url('/mod/quiz/report.php', array('id'=>$cmid, 'mode'=>'hbmon'));
         $startnode_form = new startnode_form($url, $quiz, $course, $cm);
+        $stopnode_form = new stopnode_form($url, $quiz, $course, $cm);
         static $node_up = 0;
         $outputfile = $CFG->dirroot . "/mod/quiz/accessrule/heartbeatmonitor/exec_output.text";
         $outputfile_temp = $CFG->dirroot . "/mod/quiz/accessrule/heartbeatmonitor/exec_output_temp.text";
@@ -239,6 +241,14 @@ class quiz_hbmon_report extends quiz_attempts_report {
             }
         }
 
+        $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+        $phpws_result = @socket_connect($socket, $HBCFG->host, $HBCFG->port);
+        if($phpws_result) {
+            $stopnode_form->display();
+        } else {
+            $startnode_form->display();
+        }
+
         /*
         $mform = new createoverrides_form($url, $cm, $quiz, $context);
         if($fromform = $mform->get_data()) {
@@ -264,7 +274,7 @@ class quiz_hbmon_report extends quiz_attempts_report {
                 $mform1->display();
             }
         } else {*/
-            $startnode_form->display();
+
             if(empty($table->data)) {
                 echo html_writer::nonempty_tag('liveuserstblcaption', get_string('liveusers', 'quizaccess_heartbeatmonitor'));
                 echo $OUTPUT->notification(get_string('nodatafound', 'quizaccess_heartbeatmonitor'), 'info');
