@@ -24,7 +24,6 @@
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/quiz/report/attemptsreport.php');
 require_once($CFG->dirroot . '/mod/quiz/report/hbmon/startnode_form.php');
-require_once($CFG->dirroot . '/mod/quiz/report/hbmon/stopnode_form.php');
 
 // require_once($CFG->dirroot . '/mod/quiz/report/hbmon/hbmonconfig.php');
 require_once($CFG->dirroot . '/mod/quiz/accessrule/heartbeatmonitor/hbmonconfig.php');
@@ -190,36 +189,97 @@ class quiz_hbmon_report extends quiz_attempts_report {
 
         $url = new moodle_url('/mod/quiz/report.php', array('id'=>$cmid, 'mode'=>'hbmon'));
         $startnode_form = new startnode_form($url, $quiz, $course, $cm);
-        $stopnode_form = new stopnode_form($url, $quiz, $course, $cm);
         static $node_up = 0;
         $outputfile = $CFG->dirroot . "/mod/quiz/accessrule/heartbeatmonitor/exec_output.text";
         $outputfile_temp = $CFG->dirroot . "/mod/quiz/accessrule/heartbeatmonitor/exec_output_temp.text";
         $pidfile = $CFG->dirroot . "/mod/quiz/accessrule/heartbeatmonitor/exec_pid.text";
-
+	/*
+	$out = null;
+	$err = null;
+	$cmd = "echo 'deepavali2017' | sudo -S chmod 777 " . $pidfile;
+	$ret = exec($cmd, $out, $err);
+	echo('exec cmd here -- ' . $cmd);
+	echo('exec output here -- ');
+	print_r($out);
+	print_object($out);
+	echo('exec error here -- ');
+        print_r($err);
+        print_object($err);
+	echo('exec ret here -- ');
+        print_r($ret);
+        print_object($ret);	
+*/
         // Manage node server.
         if($nodestatus = $startnode_form->get_data()) {
+          print_r($nodestatus);
             if($nodestatus->submitbutton == 'Start') {
                 // Start node.
                 $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+		if ($socket === false) {
+		    echo "socket_create() failed: reason: " . socket_strerror(socket_last_error()) . "\n";
+		    } else {
+		      echo "Socket create OK.<br/>";
+		}
+
+		echo "Checking for node sockets to connect at '$HBCFG->host' on port '$HBCFG->port'... <br/>";
                 $phpws_result = @socket_connect($socket, $HBCFG->host, $HBCFG->port);
-                if(!$phpws_result) {
+                //$phpws_result = socket_bind($socket, $HBCFG->host, $HBCFG->port) ;
+
+                if($phpws_result === false) {
                     $cmd = "node " . $CFG->dirroot . "/mod/quiz/accessrule/heartbeatmonitor/server.js";
                     file_put_contents($outputfile, file_get_contents($outputfile_temp), FILE_APPEND | LOCK_EX);
-                    file_put_contents($outputfile, ' ----- ', FILE_APPEND | LOCK_EX);
+                    file_put_contents($outputfile, ' ----- \n' . date('l jS \of F Y h:i:s A'), FILE_APPEND | LOCK_EX);
                     file_put_contents($outputfile_temp, '');
-                    file_put_contents($pidfile, '');
+                    file_put_contents($outputfile_temp, date('l jS \of F Y h:i:s A'));
+   		    file_put_contents($pidfile, '');
+		    echo "Starting node server ... <br/>";
                     exec(sprintf("%s > %s 2>&1 & echo $! >> %s", $cmd, $outputfile_temp, $pidfile));
 
                     while(trim(file_get_contents($outputfile_temp)) == false) {
-                        $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+			echo "Reattempting to connect to '$HBCFG->host' on port '$HBCFG->port'...";
                         $phpws_result = @socket_connect($socket, $HBCFG->host, $HBCFG->port);
+			if ($phpws_result === false) {
+			    echo "socket_connect() failed. Reason: ($phpws_result) " . socket_strerror(socket_last_error($socket)) . "\n";
+                            sleep(1);
+			    } else {
+			        echo "Connect OK.\n";
+                          $node_up = 1;
+			  break;
+			}
 
-                        if(!$phpws_result) {
+			/*
+			echo "Rettempting to bind to '$HBCFG->host' on port '$HBCFG->port'... <br/>";
+                        $phpws_result = socket_bind($socket, $HBCFG->host, $HBCFG->port) ;
+
+			if ($phpws_result === false) {
+			    echo "socket_bind() failed, reason: " . socket_strerror(socket_last_error($socket)) . "\n";
+                            sleep(1);
+			} else {
+			  echo "Bind OK.<br/>";
+                          $node_up = 1;
+			  break;
+			}
+			*/
+
+			//$result = socket_connect($socket, $address, $service_port);
+
+
+			/*print_r($HBCFG->host);
+			print_r($phpws_result);
+			$node_up = 1;
+			$php_result=1;
+			break;
+			*/
+
+
+			/*
+                        if($phpws_result ) {
                             sleep(1);
                         } else {
                             $node_up = 1;
                             break;
                         }
+			*/
                     }
                 }
                 if(!$node_up) {} // Throw errors captured in exec_output.text file here.
@@ -239,14 +299,6 @@ class quiz_hbmon_report extends quiz_attempts_report {
                     exec($cmd);
                 }
             }
-        }
-
-        $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-        $phpws_result = @socket_connect($socket, $HBCFG->host, $HBCFG->port);
-        if($phpws_result) {
-            $stopnode_form->display();
-        } else {
-            $startnode_form->display();
         }
 
         /*
@@ -274,7 +326,7 @@ class quiz_hbmon_report extends quiz_attempts_report {
                 $mform1->display();
             }
         } else {*/
-
+            $startnode_form->display();
             if(empty($table->data)) {
                 echo html_writer::nonempty_tag('liveuserstblcaption', get_string('liveusers', 'quizaccess_heartbeatmonitor'));
                 echo $OUTPUT->notification(get_string('nodatafound', 'quizaccess_heartbeatmonitor'), 'info');

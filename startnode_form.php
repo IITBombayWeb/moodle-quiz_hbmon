@@ -72,18 +72,18 @@ class startnode_form extends moodleform {
         $mform->addElement('header', 'starttimeserver', 'Heartbeat time server');
         $mform->setExpanded('starttimeserver', true);
 
-//         $flag = 0;
-//         $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-//         $phpws_result = @socket_connect($socket, '127.0.0.1', 3000);
+        $flag = 0;
+        $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+        $phpws_result = @socket_connect($socket, '127.0.0.1', 3000);
 
-//         if(!$phpws_result) {
+        if(!$phpws_result) {
             $mform->addElement('static', 'description', '', 'Start the \'Time server\' by clicking \'Start\' button.');
             // Start button.
             $mform->addElement('submit', 'submitbutton', 'Start');
-//         } else {
-//             $mform->addElement('static', 'description', '', 'Heartbeat time server is running. <br>Stop the time server by clicking on the \'Stop\' button.');
-//             // Stop button.
-//             $mform->addElement('submit', 'submitbutton', 'Stop');
-//         }
+        } else {
+            $mform->addElement('static', 'description', '', 'Heartbeat time server is running. <br>Stop the time server by clicking on the \'Stop\' button.');
+            // Stop button.
+            $mform->addElement('submit', 'submitbutton', 'Stop');
+        }
     }
 }
