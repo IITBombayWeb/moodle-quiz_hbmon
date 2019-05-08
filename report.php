@@ -24,6 +24,7 @@
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/quiz/report/attemptsreport.php');
 require_once($CFG->dirroot . '/mod/quiz/report/hbmon/startnode_form.php');
+require_once($CFG->dirroot . '/mod/quiz/report/hbmon/stopnode_form.php');
 
 // require_once($CFG->dirroot . '/mod/quiz/report/hbmon/hbmonconfig.php');
 require_once($CFG->dirroot . '/mod/quiz/accessrule/heartbeatmonitor/hbmonconfig.php');
@@ -131,6 +132,10 @@ class quiz_hbmon_report extends quiz_attempts_report {
 
                     $humanisedlivetime = format_time($livetime);
                     $humaniseddeadtime = format_time($deadtime);
+                    $humanisedextratime = format_time($extratime);
+                    if($humanisedlivetime == 'now') $humanisedlivetime = '-';
+                    if($humaniseddeadtime == 'now') $humaniseddeadtime = '-';
+                    if($humanisedextratime == 'now') $humanisedextratime = '-';
 
                     $table->rowclasses['roomid'] = $roomid;
                     $row = new html_table_row();
@@ -167,7 +172,7 @@ class quiz_hbmon_report extends quiz_attempts_report {
                     $cell5->id = 'deadtime';
                     $cell5->attributes['value'] = $deadtime;
 
-                    $cell6 = new html_table_cell(format_time($extratime));
+                    $cell6 = new html_table_cell($humanisedextratime);
                     $cell6->id = 'extratime';
                     $cell6->attributes['value'] = $extratime;
 
@@ -189,39 +194,25 @@ class quiz_hbmon_report extends quiz_attempts_report {
 
         $url = new moodle_url('/mod/quiz/report.php', array('id'=>$cmid, 'mode'=>'hbmon'));
         $startnode_form = new startnode_form($url, $quiz, $course, $cm);
+        $stopnode_form = new stopnode_form($url, $quiz, $course, $cm);
         static $node_up = 0;
         $outputfile = $CFG->dirroot . "/mod/quiz/accessrule/heartbeatmonitor/exec_output.text";
         $outputfile_temp = $CFG->dirroot . "/mod/quiz/accessrule/heartbeatmonitor/exec_output_temp.text";
         $pidfile = $CFG->dirroot . "/mod/quiz/accessrule/heartbeatmonitor/exec_pid.text";
-	/*
-	$out = null;
-	$err = null;
-	$cmd = "echo 'deepavali2017' | sudo -S chmod 777 " . $pidfile;
-	$ret = exec($cmd, $out, $err);
-	echo('exec cmd here -- ' . $cmd);
-	echo('exec output here -- ');
-	print_r($out);
-	print_object($out);
-	echo('exec error here -- ');
-        print_r($err);
-        print_object($err);
-	echo('exec ret here -- ');
-        print_r($ret);
-        print_object($ret);	
-*/
+
         // Manage node server.
-        if($nodestatus = $startnode_form->get_data()) {
-          print_r($nodestatus);
-            if($nodestatus->submitbutton == 'Start') {
+        if($formdata = $startnode_form->get_data()) {
+//             print_r($formdata);
+            if($formdata->submitbutton == 'Start') {
                 // Start node.
                 $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-		if ($socket === false) {
-		    echo "socket_create() failed: reason: " . socket_strerror(socket_last_error()) . "\n";
-		    } else {
-		      echo "Socket create OK.<br/>";
-		}
+                if ($socket === false) {
+//                     echo "socket_create() failed: reason: " . socket_strerror(socket_last_error()) . "\n";
+                } else {
+//                     echo "Socket create OK.<br/>";
+                }
 
-		echo "Checking for node sockets to connect at '$HBCFG->host' on port '$HBCFG->port'... <br/>";
+//                 echo "Checking for node sockets to connect at '$HBCFG->host' on port '$HBCFG->port'... <br/>";
                 $phpws_result = @socket_connect($socket, $HBCFG->host, $HBCFG->port);
                 //$phpws_result = socket_bind($socket, $HBCFG->host, $HBCFG->port) ;
 
@@ -231,74 +222,58 @@ class quiz_hbmon_report extends quiz_attempts_report {
                     file_put_contents($outputfile, ' ----- \n' . date('l jS \of F Y h:i:s A'), FILE_APPEND | LOCK_EX);
                     file_put_contents($outputfile_temp, '');
                     file_put_contents($outputfile_temp, date('l jS \of F Y h:i:s A'));
-   		    file_put_contents($pidfile, '');
-		    echo "Starting node server ... <br/>";
+                    file_put_contents($pidfile, '');
+//                     echo "Starting node server ... <br/>";
                     exec(sprintf("%s > %s 2>&1 & echo $! >> %s", $cmd, $outputfile_temp, $pidfile));
 
                     while(trim(file_get_contents($outputfile_temp)) == false) {
-			echo "Reattempting to connect to '$HBCFG->host' on port '$HBCFG->port'...";
+//                         echo "Reattempting to connect to '$HBCFG->host' on port '$HBCFG->port'...";
                         $phpws_result = @socket_connect($socket, $HBCFG->host, $HBCFG->port);
-			if ($phpws_result === false) {
-			    echo "socket_connect() failed. Reason: ($phpws_result) " . socket_strerror(socket_last_error($socket)) . "\n";
-                            sleep(1);
-			    } else {
-			        echo "Connect OK.\n";
-                          $node_up = 1;
-			  break;
-			}
-
-			/*
-			echo "Rettempting to bind to '$HBCFG->host' on port '$HBCFG->port'... <br/>";
-                        $phpws_result = socket_bind($socket, $HBCFG->host, $HBCFG->port) ;
-
-			if ($phpws_result === false) {
-			    echo "socket_bind() failed, reason: " . socket_strerror(socket_last_error($socket)) . "\n";
-                            sleep(1);
-			} else {
-			  echo "Bind OK.<br/>";
-                          $node_up = 1;
-			  break;
-			}
-			*/
-
-			//$result = socket_connect($socket, $address, $service_port);
-
-
-			/*print_r($HBCFG->host);
-			print_r($phpws_result);
-			$node_up = 1;
-			$php_result=1;
-			break;
-			*/
-
-
-			/*
-                        if($phpws_result ) {
+                        if ($phpws_result === false) {
+//                             echo "socket_connect() failed. Reason: ($phpws_result) " . socket_strerror(socket_last_error($socket)) . "\n";
                             sleep(1);
                         } else {
+//                             echo "Connect OK.\n";
                             $node_up = 1;
                             break;
                         }
-			*/
                     }
                 }
                 if(!$node_up) {} // Throw errors captured in exec_output.text file here.
                 // Display the console output captured in exec_output.text file.
-                //         echo '<br><br><br> o/p - ' . trim(file_get_contents($outputfile));
                 if (!$phpws_result && trim(file_get_contents($outputfile_temp)) != false) {
                     $node_err = nl2br(file_get_contents($outputfile_temp));
                     echo $OUTPUT->notification($node_err);
                 }
-            } else {
-                // Stop node.
-                $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-                $phpws_result = @socket_connect($socket, $HBCFG->host, $HBCFG->port);
-
-                if($phpws_result) {
-                    $cmd = "kill " . file_get_contents($pidfile);
-                    exec($cmd);
-                }
             }
+        } else if ($stopnode_form->get_data()) {
+            // Stop node.
+            $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+            $phpws_result = @socket_connect($socket, $HBCFG->host, $HBCFG->port);
+
+//             echo '<br><br><br> phpws result in else -- ';
+//             print_object($phpws_result);
+
+            if($phpws_result) {
+                $cmd = "kill " . file_get_contents($pidfile);
+                exec($cmd);
+            }
+            sleep(5);
+        }
+
+        $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+        $phpws_result = @socket_connect($socket, $HBCFG->host, $HBCFG->port);
+
+//         echo '<br><br><br> phpws result -- ';
+//         print_object($phpws_result);
+//         echo '-- res - ' . empty($phpws_result);
+
+        if(empty($phpws_result)) {
+//             echo "<br> in if --";
+            $startnode_form->display();
+        } else {
+//             echo "<br> in else --";
+            $stopnode_form->display();
         }
 
         /*
@@ -326,7 +301,7 @@ class quiz_hbmon_report extends quiz_attempts_report {
                 $mform1->display();
             }
         } else {*/
-            $startnode_form->display();
+
             if(empty($table->data)) {
                 echo html_writer::nonempty_tag('liveuserstblcaption', get_string('liveusers', 'quizaccess_heartbeatmonitor'));
                 echo $OUTPUT->notification(get_string('nodatafound', 'quizaccess_heartbeatmonitor'), 'info');
