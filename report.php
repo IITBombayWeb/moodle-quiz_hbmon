@@ -41,14 +41,18 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/heartbeatmonitor/hbmonconfig.
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class quiz_hbmon_report extends quiz_attempts_report {
-    /*
+
     public function display($quiz, $cm, $course) {
         global $OUTPUT, $DB, $PAGE;
         $PAGE->requires->jquery();
+        $output = $PAGE->get_renderer('mod_quiz');
 
         $this->quiz = $quiz;
         $this->cm = $cm;
         $this->course = $course;
+        $context = context_module::instance($cm->id);
+        $this->context = $context;
+        $this->mode = 'hbmon';
 
         // Start output.
         $this->print_header_and_tabs($cm, $course, $quiz, 'hbmon');
@@ -58,146 +62,39 @@ class quiz_hbmon_report extends quiz_attempts_report {
             return false;
         }
         $this->display_index($quiz, $cm, $course);
+        $baseurl = $this->get_base_url();
 
-        return true;
-    }*/
+        $result = "<script>
+                    function autorefreshpage() {
+                        $(document).ready(function() {
+                            var interval = setInterval(function() {
+                                window.location = window.location.href;
+//                                 window.location = $baseurl;
+                            }, 120000);
+                        });
+                    }
+                </script>";
+        $result .= "<script type='text/javascript'>autorefreshpage();</script>";
+        echo "<br>baseurl : " . $baseurl;
 
-    public function display($quiz, $cm, $course) {
-
-        global $OUTPUT, $DB, $PAGE, $CFG;
-        $PAGE->requires->jquery();
-        $output = $PAGE->get_renderer('mod_quiz');
-
-        $this->quiz = $quiz;
-        $this->cm = $cm;
-        $this->course = $course;
-
-        // Start output.
-        $this->print_header_and_tabs($cm, $course, $quiz, 'hbmon');
-        $quizobj = quiz::create($quiz->id);
-        if (empty($quizobj->get_quiz()->hbmonrequired)) {
-            echo $OUTPUT->notification('Heartbeat monitoring is not on for this quiz.<br>Please enable the corresponding quiz setting.<br>', 'danger');
-            return false;
-        }
-
-        $id = optional_param('id', 0, PARAM_INT);
-        $cm = get_coursemodule_from_id('quiz', $id);
-        $context = context_module::instance($cm->id);
-        $sessionKey = sesskey();
-        $sessionKeyJS = json_encode($sessionKey);
-        $quizwillstartin =  'quizwillstartin' ;
-        $attemptquiz =  'attemptquiz' ;
-        $days= 'days' ;
-        $day= 'day' ;
-        $hours= 'hours' ;
-        $hour= 'hour' ;
-        $minutes= 'minutes' ;
-        $minute= 'minute' ;
-        $result = '';
-        $this->timenow = intval(microtime(true));
-
-        if($this->timenow < $this->quiz->timeopen)
-        {
-            $diff=($this->quiz->timeopen) - ($this->timenow);
-            $diffMilliSecs= $diff*1000;
-            $result="<script>
-            function countDownTimer(diffMilliSecs) {
-
-            $(document).ready(function() {
-
-            $('.quizattempt').prepend(
-            $('</br>'),
-            $('<form/>', {
-            'method': 'post',
-            'action': '$CFG->wwwroot/mod/quiz/startattempt.php'
-        }).append(
-        $('<input>', {
-        'type': 'hidden',
-        'name': 'cmid',
-        'value': $cm->id
-        }),
-        $('<input>', {
-        'type': 'hidden',
-        'name': 'sesskey',
-        'value': $sessionKeyJS
-        }),
-        $('<input>', {
-        'type': 'submit',
-        'class': 'btn btn-secondary',
-        'id'   : 'startAttemptButton',
-        'value': '$attemptquiz'
-        }),
-        $('<p>', {
-        'id':'timer'
-        })
-        ),
-        $('</br>')
-        );
-        $('#startAttemptButton').hide();
-
-        var quizOpenTime = new Date().getTime() + diffMilliSecs;
-
-        var interval = setInterval(function() {
-
-        var currentTime = new Date().getTime();
-        var countDownTime = quizOpenTime - currentTime;
-        var days = Math.floor(countDownTime / (1000 * 60 * 60 * 24));
-        var hours = Math.floor((countDownTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        var minutes = Math.floor((countDownTime % (1000 * 60 * 60)) / (1000 * 60)) + 1;
-        var seconds = Math.floor((countDownTime % (1000 * 60)) / 1000);
-        var daysLeft, hrsLeft, minsLeft;
-        if (days > 0) {
-        if (days > 1)
-        var daysLeft = '<b>' + days + '</b>' + ' $days, ';
-        else
-        daysLeft = '<b>' + days + '</b>' + ' $day, ';
-        } else
-        daysLeft = '';
-        if (hours > 0) {
-        if (hours > 1)
-        hrsLeft = '<b>' + hours + '</b>' + ' $hours, ';
-        else
-        hrsLeft = '<b>' + hours + '</b>' + ' $hour, ';
-        } else
-        hrsLeft = '';
-        if (minutes > 1)
-        minsLeft = '<b>' + minutes + '</b>' + ' $minutes ';
-        else
-        minsLeft = '<b>' + minutes + '</b>' + ' $minute ';
-        document.getElementById('timer').innerHTML = '$quizwillstartin'+' '+daysLeft+hrsLeft+minsLeft;
-        if (countDownTime < 0) {
-        clearInterval(interval);
-        $('#timer').hide();
-        $('#startAttemptButton').show();
-        }
-
-        }, 1000);
-        });
-        }
-        </script>";
-            $result.="<script type='text/javascript'>countDownTimer($diffMilliSecs);</script>";
-        }
-
-        $messages[] = $result;
-//         print_object($result);  //used as a prevent message
-        $viewobj = new mod_quiz_view_object();
-        $viewobj->preventmessages[] = $result;
-//         $viewobj->infomessages[] = $result;
-//         echo $output->view_information($quiz, $cm, $context, $viewobj->infomessages);
-//         echo $output->access_messages($viewobj->infomessages);
-//         echo $output->access_messages($viewobj->preventmessages);
-
+//         $viewobj = new mod_quiz_view_object();
+//         $viewobj->preventmessages[] = $result;
 //         echo $output->view_page($course, $quiz, $cm, $context, $viewobj);
 
-        $output1 = '';
-        // Print quiz name and description.
-        $output1 .= $output->heading(format_string($quiz->name));
-        $output1 .= $output->quiz_intro($quiz, $cm);
+        //================================
+         $messages[0] = $result;
+         $output1 = '';
+         // Print quiz name and description.
+//          $output1 .= $output->heading(format_string($quiz->name));
+//          $output1 .= $output->quiz_intro($quiz, $cm);
 
-        foreach ($messages as $message) {
-            $output1 .= html_writer::tag('p', $message) . "\n";
-        }
-        echo $output1;
+//          foreach ($messages as $message) {
+         $output1 .= html_writer::tag('p', $messages[0]);
+//          }
+         echo $output1;
+         //================================
+
+        return true;
     }
 
     protected function display_index($quiz, $cm, $course) {
@@ -207,12 +104,12 @@ class quiz_hbmon_report extends quiz_attempts_report {
         // Check the user has the required capabilities to access this plugin.
         require_capability('mod/quiz:manage', $context);
 
-        $result = "<script>
-                        function autoRefreshPage(){
-                            window.location = window.location.href;
-                        }
-                        setInterval('autoRefreshPage()', 60000);
-                    </script>";
+//         $result = "<script>
+//                         function autoRefreshPage(){
+//                             window.location = window.location.href;
+//                         }
+//                         setInterval('autoRefreshPage()', 60000);
+//                     </script>";
 
         $quizid = $quiz->id;
         $courseid = $course->id;
