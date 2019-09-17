@@ -13,18 +13,23 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
- * Quiz downloadsubmissions report version information.
+ * Heartbeat monnitor module tasks.
  *
- * @package   quiz_hbmon
- * @copyright 2019 IIT Bombay
- * @author    Kashmira Nagwekar
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    quiz_hbmon
+ * @copyright  2017 IIT Bombay
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 defined('MOODLE_INTERNAL') || die();
-$plugin->version   = 2018070503;
-$plugin->requires  = 2017051500;
-$plugin->cron      = 18000;
-$plugin->component = 'quiz_hbmon';
-$plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '0.1';
+$tasks = array(
+    array(
+        'classname' => 'quiz_hbmon\task\cleanup_livetable',
+        'blocking' => 0,
+        'minute' => '*',
+        'hour' => '*',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*')
+);
