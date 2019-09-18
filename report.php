@@ -77,22 +77,10 @@ class quiz_hbmon_report extends quiz_attempts_report {
         $result .= "<script type='text/javascript'>autorefreshpage();</script>";
         echo "<br>baseurl : " . $baseurl;
 
-//         $viewobj = new mod_quiz_view_object();
-//         $viewobj->preventmessages[] = $result;
-//         echo $output->view_page($course, $quiz, $cm, $context, $viewobj);
-
-        //================================
-         $messages[0] = $result;
-         $output1 = '';
-         // Print quiz name and description.
-//          $output1 .= $output->heading(format_string($quiz->name));
-//          $output1 .= $output->quiz_intro($quiz, $cm);
-
-//          foreach ($messages as $message) {
-         $output1 .= html_writer::tag('p', $messages[0]);
-//          }
-         echo $output1;
-         //================================
+        $messages[0] = $result;
+        $output1 = '';
+        $output1 .= html_writer::tag('p', $messages[0]);
+        echo $output1;
 
         return true;
     }
@@ -103,13 +91,6 @@ class quiz_hbmon_report extends quiz_attempts_report {
 
         // Check the user has the required capabilities to access this plugin.
         require_capability('mod/quiz:manage', $context);
-
-//         $result = "<script>
-//                         function autoRefreshPage(){
-//                             window.location = window.location.href;
-//                         }
-//                         setInterval('autoRefreshPage()', 60000);
-//                     </script>";
 
         $quizid = $quiz->id;
         $courseid = $course->id;
