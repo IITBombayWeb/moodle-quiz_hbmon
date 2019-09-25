@@ -53,7 +53,6 @@ class quiz_hbmon_report extends quiz_attempts_report {
         $context        = context_module::instance($cm->id);
         $this->context  = $context;
         $this->mode     = "hbmon";
-        $var1           = '';
         $mdlurl         = new moodle_url('/mod/quiz/report.php', array('id' => $this->context->instanceid, 'mode' => $this->mode));
         $urlshort       = '/report.php?id=' . $this->context->instanceid . '&mode=' . $this->mode;
         $newurl         = $CFG->wwwroot . '/mod/quiz/report.php?id=' . $this->context->instanceid . '&mode=' . $this->mode;
@@ -84,21 +83,7 @@ class quiz_hbmon_report extends quiz_attempts_report {
                     }
                   </script>";
         $script .= "<script type='text/javascript'>autorefreshpage();</script>";
-        echo "<br>baseurl : " . $baseurl;
-        echo "<br>mdlurl : " . $mdlurl;
-/*
-        window.location = window.location.href;  // works .. but url is incomplete during start n stop node ..
-        window.location = '" . $mdlurl . "';     // redirects to overview report
-        window.location = $mdlurl;               // doesn't work
-        window.location = '$mdlurl';             // doesn't work
-        window.location = $urlshort;             // doesn't work
-        window.location = '<?= $urlshort ?>';    // doesn't work .. http://localhost/moodle/mod/quiz/<?=/report.php?id=7&mode=hbmon?> url displayed
-        window.location = '$urlshort';           // doesn't work .. localhost/report.php?id=7&mode=hbmon url shown
-        window.location = '$baseurl';            // redirects to overview report
-        window.location = '$newurl';             // works
-        window.location = '" . $newurl . "';     // works
-        window.location = $newurl;               // doesn't work
-*/
+
         $result[0] = $script;
         echo html_writer::tag('p', $result[0]);
 
