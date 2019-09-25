@@ -43,19 +43,25 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/heartbeatmonitor/hbmonconfig.
 class quiz_hbmon_report extends quiz_attempts_report {
 
     public function display($quiz, $cm, $course) {
-        global $OUTPUT, $DB, $PAGE;
+        global $OUTPUT, $DB, $PAGE, $CFG;
         $PAGE->requires->jquery();
-        $output = $PAGE->get_renderer('mod_quiz');
 
-        $this->quiz = $quiz;
-        $this->cm = $cm;
-        $this->course = $course;
-        $context = context_module::instance($cm->id);
-        $this->context = $context;
-        $this->mode = 'hbmon';
+        $output         = $PAGE->get_renderer('mod_quiz');
+        $this->quiz     = $quiz;
+        $this->cm       = $cm;
+        $this->course   = $course;
+        $context        = context_module::instance($cm->id);
+        $this->context  = $context;
+        $this->mode     = "hbmon";
+        $var1           = '';
+        $mdlurl         = new moodle_url('/mod/quiz/report.php', array('id' => $this->context->instanceid, 'mode' => $this->mode));
+        $urlshort       = '/report.php?id=' . $this->context->instanceid . '&mode=' . $this->mode;
+        $newurl         = $CFG->wwwroot . '/mod/quiz/report.php?id=' . $this->context->instanceid . '&mode=' . $this->mode;
 
         // Start output.
         $this->print_header_and_tabs($cm, $course, $quiz, 'hbmon');
+        echo html_writer::tag('p', '<b><i>' . date('D, d M Y H:i:s') . '</b></i>', array('id' => 'xyz', 'align' => 'right'));
+
         $quizobj = quiz::create($quiz->id);
         if (empty($quizobj->get_quiz()->hbmonrequired)) {
             echo $OUTPUT->notification('Heartbeat monitoring is not on for this quiz.<br>Please enable the corresponding quiz setting.<br>', 'danger');
@@ -64,23 +70,37 @@ class quiz_hbmon_report extends quiz_attempts_report {
         $this->display_index($quiz, $cm, $course);
         $baseurl = $this->get_base_url();
 
-        $result = "<script>
+        $script = "<script>
                     function autorefreshpage() {
                         $(document).ready(function() {
                             var interval = setInterval(function() {
-                                window.location = window.location.href;
-//                                 window.location = $baseurl;
-                            }, 120000);
+                                if (window.location.href == '$newurl') {
+                                    window.location.reload(true);
+                                } else {
+                                    window.location = '$newurl';
+                                }
+                            }, 60000);
                         });
                     }
-                </script>";
-        $result .= "<script type='text/javascript'>autorefreshpage();</script>";
+                  </script>";
+        $script .= "<script type='text/javascript'>autorefreshpage();</script>";
         echo "<br>baseurl : " . $baseurl;
-
-        $messages[0] = $result;
-        $output1 = '';
-        $output1 .= html_writer::tag('p', $messages[0]);
-        echo $output1;
+        echo "<br>mdlurl : " . $mdlurl;
+/*
+        window.location = window.location.href;  // works .. but url is incomplete during start n stop node ..
+        window.location = '" . $mdlurl . "';     // redirects to overview report
+        window.location = $mdlurl;               // doesn't work
+        window.location = '$mdlurl';             // doesn't work
+        window.location = $urlshort;             // doesn't work
+        window.location = '<?= $urlshort ?>';    // doesn't work .. http://localhost/moodle/mod/quiz/<?=/report.php?id=7&mode=hbmon?> url displayed
+        window.location = '$urlshort';           // doesn't work .. localhost/report.php?id=7&mode=hbmon url shown
+        window.location = '$baseurl';            // redirects to overview report
+        window.location = '$newurl';             // works
+        window.location = '" . $newurl . "';     // works
+        window.location = $newurl;               // doesn't work
+*/
+        $result[0] = $script;
+        echo html_writer::tag('p', $result[0]);
 
         return true;
     }
@@ -222,8 +242,10 @@ class quiz_hbmon_report extends quiz_attempts_report {
         }
 
         $url = new moodle_url('/mod/quiz/report.php', array('id'=>$cmid, 'mode'=>'hbmon'));
-        $startnode_form = new startnode_form($url, $quiz, $course, $cm);
-        $stopnode_form = new stopnode_form($url, $quiz, $course, $cm);
+        $urlforform = '/mod/quiz/report.php?id=' . $cmid . '&mode=hbmon';
+        $formurl = new moodle_url($urlforform);
+        $startnode_form = new startnode_form($formurl, $quiz, $course, $cm);
+        $stopnode_form = new stopnode_form($formurl, $quiz, $course, $cm);
         static $node_up = 0;
         $outputfile = $CFG->dirroot . "/mod/quiz/accessrule/heartbeatmonitor/exec_output.text";
         $outputfile_temp = $CFG->dirroot . "/mod/quiz/accessrule/heartbeatmonitor/exec_output_temp.text";
@@ -246,7 +268,12 @@ class quiz_hbmon_report extends quiz_attempts_report {
                 //$phpws_result = socket_bind($socket, $HBCFG->host, $HBCFG->port) ;
 
                 if($phpws_result === false) {
-                    $cmd = "node " . $CFG->dirroot . "/mod/quiz/accessrule/heartbeatmonitor/server.js";
+                    $cmd = "node " . $CFG->dirroot . "/mod/quiz/accessrule/heartbeatmonitor/server.js " .
+                                json_encode($CFG->dbhost) . "  " .
+                                json_encode($CFG->dbuser) . "  " .
+                                json_encode($CFG->dbpass) . "  " .
+                                json_encode($CFG->dbname) . "  " .
+                                json_encode($CFG->prefix) . "  ";
                     file_put_contents($outputfile, file_get_contents($outputfile_temp), FILE_APPEND | LOCK_EX);
                     file_put_contents($outputfile, ' ----- \n' . date('l jS \of F Y h:i:s A'), FILE_APPEND | LOCK_EX);
                     file_put_contents($outputfile_temp, '');
