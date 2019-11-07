@@ -17,9 +17,9 @@
 /**
  * Admin module for quizaccess_heartbeatmonitor plugin.
  *
- * @package    quizaccess
+ * @package    quiz
  * @subpackage heartbeatmonitor
- * @author     Prof. P Sunthar, Amrata Ramchandani <ramchandani.amrata@gmail.com>, Kashmira Nagwekar
+ * @author     Prof. P Sunthar, Amrata Ramchandani, Kashmira Nagwekar
  * @copyright  2017 IIT Bombay, India
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -58,13 +58,6 @@ $context = context_module::instance($cm->id);
 
 // Check the user has the required capabilities to access this plugin.
 require_capability('mod/quiz:manage', $context);
-
-// $result = "<script>
-//                 var interval = setInterval(function() {
-//                     window.location.reload();
-//                 }, 300000);
-//             </script>";
-// $result .= "<script type='text/javascript'>countDownTimer($diffMilliSecs);</script>";
 
 // Display live users.
 // Fetch records from database.

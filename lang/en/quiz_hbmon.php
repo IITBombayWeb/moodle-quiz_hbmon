@@ -26,4 +26,4 @@ $string['hbmonreport'] = 'Heartbeat monitor report';
 $string['pluginname'] = 'Heartbeat monitor';
 $string['plugindescription'] = 'UI for Quiz accessrule - Heartbeat monitor';
 $string['reporthbmon'] = 'Heartbeat monitor report';
-$string['hbmon_cron'] = 'Cleanup livetable data';
+$string['hbmon_cron'] = 'Cleanup quiz heartbeatmonitor livetable data';

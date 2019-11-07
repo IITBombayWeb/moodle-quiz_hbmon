@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Heartbeat monnitor module tasks.
+ * Heartbeat monitor module tasks.
  *
  * @package    quiz_hbmon
  * @copyright  2017 IIT Bombay
